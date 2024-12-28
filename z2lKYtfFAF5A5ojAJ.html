@@ -1,0 +1,871 @@
+<html><head><base href=".">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Syst&#xe8;me d&apos;Exploitation Web</title>
+<style>
+/* Style global */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #121212;
+    color: white;
+    min-height: 100vh;
+    padding-top: 60px; /* Space for top bar */
+    padding-bottom: 60px; /* Space for bottom bar */
+    overflow: hidden;
+}
+
+/* Fond d'écran */
+#background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+}
+
+/* Bureau */
+.app-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    margin-bottom: 60px;
+}
+
+/* Icônes des applications */
+.app-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 10px;
+    background-color: rgba(68, 68, 68, 0.8);
+    color: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+}
+
+.app-icon p {
+    margin-top: 8px;
+    font-size: 14px;
+    color: white;
+}
+
+.app-icon:hover {
+    transform: scale(1.1);
+    background-color: rgba(102, 102, 102, 0.9);
+}
+
+.app-icon.dragging {
+    opacity: 0.5;
+    cursor: move;
+}
+
+/* Dossier */
+.folder {
+    background-color: rgba(255, 196, 0, 0.3);
+    border: 2px dashed #ffc400;
+    min-height: 150px;
+    border-radius: 15px;
+    padding: 10px;
+    margin: 10px;
+}
+
+.folder-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.folder-title {
+    margin: 0;
+    color: #ffc400;
+}
+
+/* Menu contextuel */
+.context-menu {
+    position: fixed;
+    background: rgba(40, 40, 40, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    padding: 8px 0;
+    min-width: 200px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 2000;
+}
+
+.context-menu-item {
+    padding: 12px 16px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.context-menu-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.delete-btn {
+    display: none !important; /* Removed button styling since we're removing it */
+}
+
+/* Barre de tâches bas */
+#bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 50px;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+    z-index: 1000;
+}
+
+/* Ajouter barre de tâche supérieure */
+#top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50px;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+}
+
+/* Bouton "+" */
+#add-button {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #444;
+    color: white;
+    font-size: 20px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+#add-button:hover {
+    background-color: #666;
+    transform: scale(1.1);
+}
+
+/* Fenêtre modale */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background-color: white;
+    color: black;
+    border-radius: 15px;
+    padding: 30px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.modal-content h2 {
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 24px;
+}
+
+.modal-content input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.modal-actions button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#save-app {
+    background-color: #2196F3;
+    color: white;
+}
+
+#save-app:hover {
+    background-color: #1976D2;
+}
+
+#cancel-modal {
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+#cancel-modal:hover {
+    background-color: #e0e0e0;
+}
+
+/* App Window Styles */
+.app-window {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 1200px;
+    height: 90%;
+    max-height: 800px;
+    background-color: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    resize: both;
+    min-width: 300px;
+    min-height: 200px;
+    z-index: 1000;
+}
+
+.app-header {
+    background-color: #f5f5f5;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: move;
+    user-select: none;
+}
+
+.window-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.minimize-btn, .maximize-btn, .close-btn {
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+.minimize-btn {
+    background-color: #ffbd2e;
+}
+
+.maximize-btn {
+    background-color: #28c940;
+}
+
+.close-btn {
+    background-color: #ff4444;
+}
+
+.app-content {
+    flex: 1;
+    overflow: auto;
+    background: white;
+    padding: 20px;
+}
+
+/* Fix mobile responsive styles */
+@media (max-width: 768px) {
+  .app-container {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 10px;
+  }
+  
+  .app-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 30px;
+  }
+  
+  .app-icon img {
+    width: 30px !important;
+    height: 30px !important;
+  }
+  
+  .folder {
+    min-height: 100px;
+  }
+}
+</style>
+<script>document.addEventListener("DOMContentLoaded", () => {
+  const desktop = document.getElementById("desktop");
+  const addButton = document.getElementById("add-button");
+  const modal = document.getElementById("modal");
+  const saveAppButton = document.getElementById("save-app");
+  const cancelModalButton = document.getElementById("cancel-modal");
+  const savedApps = loadAppState();
+  if (savedApps) {
+    desktop.innerHTML = '';
+    savedApps.forEach(app => {
+      const appIcon = createAppIcon(app.name, app.icon, app.path);
+      const savedIcon = getAppIcon(app.path);
+      if (savedIcon) {
+        const img = document.createElement('img');
+        img.src = savedIcon;
+        img.style.width = '40px';
+        img.style.height = '40px';
+        appIcon.innerHTML = '';
+        appIcon.appendChild(img);
+        appIcon.appendChild(document.createElement('p')).textContent = app.name;
+      }
+      desktop.appendChild(appIcon);
+    });
+  }
+  function initializeDragAndDrop() {
+    const appIcons = document.querySelectorAll(".app-icon");
+    const documentsFolder = document.querySelector('[data-app="folder-documents"]');
+    
+    appIcons.forEach(icon => {
+        icon.setAttribute("draggable", true);
+        
+        icon.addEventListener("dragstart", e => {
+            e.target.classList.add("dragging");
+            e.dataTransfer.setData("text/plain", e.target.dataset.app);
+        });
+        
+        icon.addEventListener("dragend", e => {
+            e.target.classList.remove("dragging");
+        });
+    });
+
+    documentsFolder.addEventListener("dragover", e => {
+        e.preventDefault();
+    });
+
+    documentsFolder.addEventListener("drop", e => {
+        e.preventDefault();
+        const appId = e.dataTransfer.getData("text/plain");
+        const draggedApp = document.querySelector(`[data-app="${appId}"]`);
+        
+        if (draggedApp && draggedApp.dataset.app !== "folder-documents") {
+            // Stocker les applications dans le dossier en localStorage
+            const folderApps = JSON.parse(localStorage.getItem('folder-documents') || '[]');
+            folderApps.push({
+                name: draggedApp.dataset.name,
+                app: draggedApp.dataset.app,
+                icon: draggedApp.innerHTML.split('<p>')[0].trim()
+            });
+            localStorage.setItem('folder-documents', JSON.stringify(folderApps));
+            
+            // Optionnellement, masquer l'application glissée
+            draggedApp.style.opacity = "0.5";
+        }
+    });
+}
+
+  let contextMenu = null;
+  document.addEventListener("contextmenu", e => {
+    e.preventDefault();
+    if (contextMenu) {
+      document.body.removeChild(contextMenu);
+    }
+    contextMenu = document.createElement("div");
+    contextMenu.className = "context-menu";
+    contextMenu.innerHTML = `
+            <div class="context-menu-item" id="create-folder">Créer un dossier</div>
+            <div class="context-menu-item" id="delete-app">Supprimer</div>
+        `;
+    contextMenu.style.left = `${e.clientX}px`;
+    contextMenu.style.top = `${e.clientY}px`;
+    document.body.appendChild(contextMenu);
+    contextMenu.querySelector("#create-folder").addEventListener("click", createFolder);
+    contextMenu.querySelector("#delete-app").addEventListener("click", () => {
+      const target = e.target.closest(".app-icon");
+      if (target) {
+        deleteApp(target);
+      }
+    });
+  });
+  document.addEventListener("click", () => {
+    if (contextMenu) {
+      document.body.removeChild(contextMenu);
+      contextMenu = null;
+    }
+  });
+  function initializeAppInteractions(appIcon) {
+    let longPressTimer;
+    const longPressDuration = 500;
+    appIcon.addEventListener('touchstart', e => {
+      longPressTimer = setTimeout(() => {
+        showContextMenu(e, appIcon);
+      }, longPressDuration);
+    });
+    appIcon.addEventListener('touchend', () => {
+      clearTimeout(longPressTimer);
+    });
+  }
+  function showContextMenu(event, appIcon) {
+    const contextMenu = document.createElement('div');
+    contextMenu.className = 'context-menu';
+    const menuItems = [{
+      icon: '🗑️',
+      text: 'Désinstaller',
+      action: () => deleteApp(appIcon)
+    }, {
+      icon: '🖼️',
+      text: 'Changer l\'icône',
+      action: () => changeAppIcon(appIcon)
+    }, {
+      icon: '📁',
+      text: 'Créer un dossier',
+      action: createNewFolder
+    }];
+    menuItems.forEach(item => {
+      const menuItem = document.createElement('div');
+      menuItem.className = 'context-menu-item';
+      menuItem.innerHTML = `${item.icon} ${item.text}`;
+      menuItem.addEventListener('click', () => {
+        item.action();
+        document.body.removeChild(contextMenu);
+      });
+      contextMenu.appendChild(menuItem);
+    });
+    const rect = appIcon.getBoundingClientRect();
+    contextMenu.style.left = `${rect.left}px`;
+    contextMenu.style.top = `${rect.bottom + 5}px`;
+    document.body.appendChild(contextMenu);
+    const closeMenu = e => {
+      if (!contextMenu.contains(e.target)) {
+        document.body.removeChild(contextMenu);
+        document.removeEventListener('click', closeMenu);
+      }
+    };
+    setTimeout(() => document.addEventListener('click', closeMenu), 100);
+  }
+  function changeAppIcon(appIcon) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = e => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const iconData = e.target.result;
+          saveAppIcon(appIcon.dataset.app, iconData);
+          const img = document.createElement('img');
+          img.src = iconData;
+          img.style.width = '40px';
+          img.style.height = '40px';
+          appIcon.innerHTML = '';
+          appIcon.appendChild(img);
+          appIcon.appendChild(document.createElement('p')).textContent = appIcon.dataset.name;
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    input.click();
+  }
+  function createNewFolder() {
+    const folderName = prompt('Nom du dossier :');
+    if (folderName) {
+      const folder = document.createElement('div');
+      folder.className = 'folder';
+      folder.innerHTML = `
+                <div class="folder-header">
+                    <h3>📁 ${folderName}</h3>
+                </div>
+                <div class="folder-content"></div>
+            `;
+      desktop.appendChild(folder);
+      folder.addEventListener('dragover', e => e.preventDefault());
+      folder.addEventListener('drop', e => {
+        e.preventDefault();
+        const appId = e.dataTransfer.getData('text/plain');
+        const app = document.querySelector(`[data-app="${appId}"]`);
+        if (app) {
+          folder.querySelector('.folder-content').appendChild(app);
+        }
+      });
+      const currentApps = Array.from(desktop.children).map(el => {
+        if (el.classList.contains('folder')) {
+          return {
+            type: 'folder',
+            name: el.querySelector('.folder-title').textContent.replace('📁 ', ''),
+            apps: Array.from(el.querySelectorAll('.app-icon')).map(icon => ({
+              name: icon.dataset.name,
+              icon: icon.innerHTML.split('<p>')[0].trim(),
+              path: icon.dataset.app
+            }))
+          };
+        } else {
+          return {
+            name: el.dataset.name,
+            icon: el.innerHTML.split('<p>')[0].trim(),
+            path: el.dataset.app
+          };
+        }
+      });
+      saveAppState(currentApps);
+    }
+  }
+  function createFolder() {
+    const folderName = prompt("Nom du dossier :");
+    if (folderName) {
+      const folder = document.createElement("div");
+      folder.className = "folder";
+      folder.innerHTML = `
+                <div class="folder-header">
+                    <h3 class="folder-title">📁 ${folderName}</h3>
+                </div>
+            `;
+      desktop.appendChild(folder);
+      folder.addEventListener("dragover", e => {
+        e.preventDefault();
+      });
+      folder.addEventListener("drop", e => {
+        e.preventDefault();
+        const appPath = e.dataTransfer.getData("text/plain");
+        const draggedApp = document.querySelector(`[data-app="${appPath}"]`);
+        if (draggedApp) {
+          folder.appendChild(draggedApp);
+        }
+      });
+      const currentApps = Array.from(desktop.children).map(el => {
+        if (el.classList.contains('folder')) {
+          return {
+            type: 'folder',
+            name: el.querySelector('.folder-title').textContent.replace('📁 ', ''),
+            apps: Array.from(el.querySelectorAll('.app-icon')).map(icon => ({
+              name: icon.dataset.name,
+              icon: icon.innerHTML.split('<p>')[0].trim(),
+              path: icon.dataset.app
+            }))
+          };
+        } else {
+          return {
+            name: el.dataset.name,
+            icon: el.innerHTML.split('<p>')[0].trim(),
+            path: el.dataset.app
+          };
+        }
+      });
+      saveAppState(currentApps);
+    }
+  }
+  function deleteApp(appElement) {
+    if (confirm("Voulez-vous vraiment supprimer cette application ?")) {
+      localStorage.removeItem(`app-icon-${appElement.dataset.app}`);
+      appElement.remove();
+      const currentApps = Array.from(desktop.children).map(icon => ({
+        name: icon.dataset.name,
+        icon: icon.innerHTML.split('<p>')[0].trim(),
+        path: icon.dataset.app
+      }));
+      saveAppState(currentApps);
+    }
+  }
+  initializeDragAndDrop();
+  loadSavedWallpaper();
+  initializeAppListeners();
+  addButton.addEventListener("click", showModal);
+  saveAppButton.addEventListener("click", saveNewApp);
+  cancelModalButton.addEventListener("click", hideModal);
+  function loadSavedWallpaper() {
+    const savedWallpaper = localStorage.getItem('wallpaper');
+    const savedGradient = localStorage.getItem('gradient');
+    const savedThemeGradient = localStorage.getItem('themeGradient');
+    const backgroundElement = document.getElementById('background');
+    if (savedWallpaper) {
+      backgroundElement.style.backgroundImage = `url(${savedWallpaper})`;
+      backgroundElement.style.backgroundSize = 'cover';
+      backgroundElement.style.backgroundPosition = 'center';
+    } else if (savedGradient) {
+      backgroundElement.style.background = savedGradient;
+    } else if (savedThemeGradient) {
+      backgroundElement.style.background = savedThemeGradient;
+    }
+  }
+  function initializeAppListeners() {
+    const appIcons = document.querySelectorAll(".app-icon");
+    appIcons.forEach(icon => {
+      icon.addEventListener("click", () => {
+        openApplication(icon.dataset.app);
+      });
+      initializeAppInteractions(icon);
+    });
+  }
+  function showModal() {
+    modal.classList.remove("hidden");
+  }
+  function hideModal() {
+    modal.classList.add("hidden");
+    appNameInput.value = "";
+    appIconInput.value = "";
+  }
+  function saveNewApp() {
+    const name = appNameInput.value.trim();
+    const icon = appIconInput.value.trim() || "❓";
+    const appFile = document.getElementById("app-file").files[0];
+    if (name && appFile) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const content = e.target.result;
+        const appPath = `apps/${name.toLowerCase()}.html`;
+        const newApp = createAppIcon(name, icon, appPath);
+        desktop.appendChild(newApp);
+        hideModal();
+        alert(`Application "${name}" ajoutée avec succès`);
+        const currentApps = Array.from(desktop.children).map(icon => ({
+          name: icon.dataset.name,
+          icon: icon.innerHTML.split('<p>')[0].trim(),
+          path: icon.dataset.app
+        }));
+        saveAppState(currentApps);
+      };
+      reader.readAsText(appFile);
+    } else {
+      alert("Veuillez remplir tous les champs requis");
+    }
+  }
+  function createAppIcon(name, icon, appPath) {
+    const div = document.createElement("div");
+    div.classList.add("app-icon");
+    div.dataset.app = appPath;
+    div.dataset.name = name;
+    div.innerHTML = `${icon}<p>${name}</p>`;
+    div.addEventListener("click", () => openApplication(appPath));
+    return div;
+  }
+  function openApplication(appPath) {
+    const fullPath = `apps/${appPath}.html`;
+    fetch(fullPath).then(response => {
+      if (!response.ok) {
+        throw new Error(`Application non trouvée dans ${fullPath}`);
+      }
+      return response.text();
+    }).then(createAppWindow).catch(error => {
+      console.error(error);
+      alert(`Erreur : L'application n'existe pas dans le dossier apps.`);
+    });
+  }
+  function createAppWindow(content) {
+    const appWindow = document.createElement('div');
+    appWindow.classList.add('app-window');
+    appWindow.innerHTML = `
+        <div class="app-header">
+            <div class="window-controls">
+                <button class="minimize-btn"></button>
+                <button class="maximize-btn"></button>
+                <button class="close-btn"></button>
+            </div>
+        </div>
+        <div class="app-content">${content}</div>
+    `;
+    document.body.appendChild(appWindow);
+    const minimize = appWindow.querySelector('.minimize-btn');
+    const maximize = appWindow.querySelector('.maximize-btn');
+    const close = appWindow.querySelector('.close-btn');
+    minimize.onclick = () => {
+      if (appWindow.style.height === '40px') {
+        appWindow.style.height = '90%';
+        appWindow.querySelector('.app-content').style.display = 'block';
+      } else {
+        appWindow.style.height = '40px';
+        appWindow.querySelector('.app-content').style.display = 'none';
+      }
+    };
+    maximize.onclick = () => {
+      if (appWindow.style.width === '100%') {
+        appWindow.style.width = '90%';
+        appWindow.style.height = '90%';
+        appWindow.style.top = '50%';
+        appWindow.style.left = '50%';
+        appWindow.style.transform = 'translate(-50%, -50%)';
+      } else {
+        appWindow.style.width = '100%';
+        appWindow.style.height = '100%';
+        appWindow.style.top = '0';
+        appWindow.style.left = '0';
+        appWindow.style.transform = 'none';
+        appWindow.style.borderRadius = '0';
+      }
+    };
+    close.onclick = () => document.body.removeChild(appWindow);
+    const header = appWindow.querySelector('.app-header');
+    let isDragging = false;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+    let xOffset = 0;
+    let yOffset = 0;
+    header.addEventListener('mousedown', e => {
+      initialX = e.clientX - xOffset;
+      initialY = e.clientY - yOffset;
+      if (e.target === header) {
+        isDragging = true;
+      }
+    });
+    document.addEventListener('mousemove', e => {
+      if (isDragging) {
+        e.preventDefault();
+        currentX = e.clientX - initialX;
+        currentY = e.clientY - initialY;
+        xOffset = currentX;
+        yOffset = currentY;
+        appWindow.style.transform = `translate(${currentX}px, ${currentY}px)`;
+      }
+    });
+    document.addEventListener('mouseup', () => {
+      initialX = currentX;
+      initialY = currentY;
+      isDragging = false;
+    });
+    appWindow.style.resize = 'both';
+    appWindow.style.overflow = 'hidden';
+  }
+  const appIcons = document.querySelectorAll(".app-icon");
+  appIcons.forEach(icon => {
+    const deleteBtn = icon.querySelector(".delete-btn");
+    if (deleteBtn) {
+      deleteBtn.remove();
+    }
+  });
+  saveAppButton.textContent = "Installer";
+});
+function saveAppState(apps) {
+  localStorage.setItem('desktop-apps', JSON.stringify(apps));
+}
+function loadAppState() {
+  const saved = localStorage.getItem('desktop-apps');
+  return saved ? JSON.parse(saved) : null;
+}
+function saveAppIcon(appId, iconData) {
+  localStorage.setItem(`app-icon-${appId}`, iconData);
+}
+function getAppIcon(appId) {
+  return localStorage.getItem(`app-icon-${appId}`);
+}</script>
+<script src="script.js" defer></script>
+<script src="haut.js" defer></script>
+<script src="bas.js" defer></script> 
+<script src="flottant.js" defer></script>
+<script src="parametres.js" defer></script>
+</head>
+<body>
+    <div id="top-bar"></div>
+    <div id="background"></div>
+    
+    <div class="app-container" id="desktop">
+        <div class="app-icon" data-app="folder-documents" data-name="Documents" style="background-color: rgba(255, 196, 0, 0.3);">
+            📁
+            <p>Documents</p>
+        </div>
+        <div class="app-icon" data-app="apps/music.html" data-name="Musique">
+            &#x1f3b5;
+            <p>Musique</p>
+            <button class="delete-btn">&#x1f5d1;&#xfe0f;</button>
+        </div>
+        <div class="app-icon" data-app="apps/drinks.html" data-name="Boissons">
+            &#x1f964;
+            <p>Boissons</p>
+            <button class="delete-btn">&#x1f5d1;&#xfe0f;</button>
+        </div>
+        <div class="app-icon" data-app="apps/keyboard.html" data-name="Clavier">
+            &#x2328;&#xfe0f;
+            <p>Clavier</p>
+            <button class="delete-btn">&#x1f5d1;&#xfe0f;</button>
+        </div>
+        <div class="app-icon" data-app="apps/game.html" data-name="Jeu">
+            &#x1f344;
+            <p>Jeu</p>
+            <button class="delete-btn">&#x1f5d1;&#xfe0f;</button>
+        </div>
+        <div class="app-icon" data-app="apps/photos.html" data-name="Photos">
+            &#x1f61a;
+            <p>Photos</p>
+            <button class="delete-btn">&#x1f5d1;&#xfe0f;</button>
+        </div>
+        <div class="app-icon" data-app="apps/emotions.html" data-name="&#xc9;motions">
+            &#x1f601;
+            <p>&#xc9;motions</p>
+            <button class="delete-btn">&#x1f5d1;&#xfe0f;</button>
+        </div>
+        <div class="app-icon" data-app="apps/landscape.html" data-name="Paysage">
+            &#x1f304;
+            <p>Paysage</p>
+            <button class="delete-btn">&#x1f5d1;&#xfe0f;</button>
+        </div>
+        <div class="app-icon" data-app="apps/recipes.html" data-name="Recettes">
+            &#x1f37d;&#xfe0f;
+            <p>Recettes</p>
+            <button class="delete-btn">&#x1f5d1;&#xfe0f;</button>
+        </div>
+        <div class="app-icon" data-app="apps/work.html" data-name="Travail">
+            &#x1f469;&#x200d;&#x1f4bb;
+            <p>Travail</p>
+            <button class="delete-btn">&#x1f5d1;&#xfe0f;</button>
+        </div>
+    </div>
+
+    <div id="bottom-bar">
+        <button id="add-button">+</button>
+    </div>
+
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Ajouter une application</h2>
+            <label for="app-name">Nom de l&apos;application :</label>
+            <input type="text" id="app-name" placeholder="Entrez un nom">
+            <label for="app-icon">Ic&#xf4;ne Unicode :</label>
+            <input type="text" id="app-icon" placeholder="Ex : &#x1f3b5;">
+            <label for="app-file">Importer un fichier HTML :</label>
+            <input type="file" id="app-file" accept=".html">
+            <div class="modal-actions">
+                <button id="save-app">Installer</button>
+                <button id="cancel-modal">Annuler</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
